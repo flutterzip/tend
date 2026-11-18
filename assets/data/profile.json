@@ -1,0 +1,33 @@
+{
+ "name": "Olympicson",
+ "email": "hello@flutterzip.com",
+ "avatar": "asset:people/olympicson.png",
+ "bloodType": "O+",
+ "heartRate": 72,
+ "allergies": [
+  "Penicillin"
+ ],
+ "appointments": [
+  {
+   "id": "seed-1",
+   "doctorId": "adaeze-okoro",
+   "daysFromNow": 2,
+   "time": "10:30",
+   "reason": "Follow-up"
+  },
+  {
+   "id": "seed-2",
+   "doctorId": "samuel-reyes",
+   "daysFromNow": -12,
+   "time": "09:00",
+   "reason": "Check-up"
+  },
+  {
+   "id": "seed-3",
+   "doctorId": "mei-tanaka",
+   "daysFromNow": -40,
+   "time": "15:30",
+   "reason": "Skin check"
+  }
+ ]
+}
