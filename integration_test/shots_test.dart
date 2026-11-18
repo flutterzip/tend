@@ -50,6 +50,10 @@ void main() {
     await settle(t, 1500);
     await t.drag(find.byType(ListView).last, const Offset(0, -420));
     await settle(t, 800);
+    // Tomorrow, so there are open morning slots whatever the time now.
+    final days = find.byWidgetPredicate((w) => w is Semantics && w.properties.button == true && RegExp(r'^(Mon|Tue|Wed|Thu|Fri|Sat) ').hasMatch(w.properties.label ?? ''));
+    await t.tap(days.at(1));
+    await settle(t, 600);
     await t.tap(find.byWidgetPredicate((w) => w is Semantics && (w.properties.label ?? '').endsWith('AM') && w.properties.enabled == true).first);
     await shot('doctor', 1200);
     homeNavigator.currentState!.pop();
