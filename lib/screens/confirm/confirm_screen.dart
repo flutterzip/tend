@@ -24,6 +24,7 @@ class ConfirmScreen extends ConsumerStatefulWidget {
 class _ConfirmScreenState extends ConsumerState<ConfirmScreen> with SingleTickerProviderStateMixin {
   late Reason reason = widget.moving?.reason ?? Reason.checkUp;
   late final tear = AnimationController(vsync: this, duration: Motion.tear);
+  final scroll = ScrollController();
   bool busy = false, booked = false;
 
   Appointment get draft => Appointment(
@@ -56,6 +57,7 @@ class _ConfirmScreenState extends ConsumerState<ConfirmScreen> with SingleTicker
   @override
   void dispose() {
     tear.dispose();
+    scroll.dispose();
     super.dispose();
   }
 
@@ -63,61 +65,78 @@ class _ConfirmScreenState extends ConsumerState<ConfirmScreen> with SingleTicker
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final moving = widget.moving != null;
+    // The tab bar slides away on this page, so only the device's own inset.
+    final safe = MediaQuery.viewPaddingOf(context).bottom;
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(Tokens.gutter, MediaQuery.paddingOf(context).top + 8, Tokens.gutter, 130),
+      body: Stack(
         children: [
-          Row(
+          ListView(
+            controller: scroll,
+            padding: EdgeInsets.fromLTRB(Tokens.gutter, TopChrome.extent(context) + 4, Tokens.gutter, safe + 40),
             children: [
-              if (!booked) RoundButton(icon: Icons.arrow_back_rounded, label: 'Back', onTap: () => Navigator.of(context).pop()),
-              const Spacer(),
-              Text(moving ? 'Move appointment' : 'Confirm', style: text.titleMedium),
+              AnimatedSwitcher(
+                duration: Motion.medium,
+                child: booked
+                    ? Column(
+                        key: const ValueKey('done'),
+                        children: [
+                          const PulseCheck(size: 96),
+                          Text(moving ? 'Moved' : 'You are booked', style: text.headlineSmall),
+                          const SizedBox(height: 4),
+                          Text('We will remind you the day before.', style: text.bodyMedium),
+                        ],
+                      )
+                    : Column(
+                        key: const ValueKey('check'),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(moving ? 'Your new time' : 'Your visit', style: text.headlineSmall),
+                          const SizedBox(height: 4),
+                          Text('Check the details, then book.', style: text.bodyMedium),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 22),
+              AnimatedBuilder(
+                animation: tear,
+                builder: (context, _) => BookingTicket(doctor: widget.doctor, appointment: draft, tear: Curves.easeOutBack.transform(tear.value)),
+              ),
+              const SizedBox(height: 40),
+              // Folds away once booked. It stays in the list (as nothing) so
+              // the button below keeps its place and can morph.
+              if (!moving)
+                AnimatedSize(
+                  duration: Motion.medium,
+                  curve: Motion.settle,
+                  alignment: Alignment.topCenter,
+                  child: booked
+                      ? const SizedBox(width: double.infinity)
+                      : OptionSection(
+                          title: 'Reason for the visit',
+                          child: Choices<Reason>(values: Reason.values, value: reason, label: (r) => r.label, onChanged: (r) => setState(() => reason = r)),
+                        ),
+                ),
+              const SizedBox(height: 24),
+              // Booking breaks the button apart and it flies together as the way
+              // to your visits.
+              ParticleMorph(
+                child: booked
+                    ? TendButton(key: const ValueKey('visits'), label: 'See my visits', icon: Icons.event_note_rounded, onPressed: finish)
+                    : TendButton(key: const ValueKey('book'), label: moving ? 'Move it' : 'Book for ${money(widget.doctor.fee)}', icon: Icons.lock_rounded, busy: busy, onPressed: book),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
-          AnimatedSwitcher(
-            duration: Motion.medium,
-            child: booked
-                ? Column(
-                    key: const ValueKey('done'),
-                    children: [
-                      const PulseCheck(size: 96),
-                      Text(moving ? 'Moved' : 'You are booked', style: text.headlineSmall),
-                      const SizedBox(height: 4),
-                      Text('We will remind you the day before.', style: text.bodyMedium),
-                    ],
-                  )
-                : Column(
-                    key: const ValueKey('check'),
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(moving ? 'Your new time' : 'Your visit', style: text.headlineSmall),
-                      const SizedBox(height: 4),
-                      Text('Check the details, then book.', style: text.bodyMedium),
-                    ],
-                  ),
-          ),
-          const SizedBox(height: 22),
-          AnimatedBuilder(
-            animation: tear,
-            builder: (context, _) => BookingTicket(doctor: widget.doctor, appointment: draft, tear: Curves.easeOutBack.transform(tear.value)),
-          ),
-          const SizedBox(height: 40),
-          if (!booked && !moving)
-            OptionSection(
-              title: 'Reason for the visit',
-              child: Choices<Reason>(
-                values: Reason.values,
-                value: reason,
-                label: (r) => r.label,
-                onChanged: (r) => setState(() => reason = r),
-              ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: TopChrome(
+              controller: scroll,
+              leading: booked ? null : RoundButton(icon: Icons.arrow_back_rounded, label: 'Back', onTap: () => Navigator.of(context).pop()),
+              trailing: Text(moving ? 'Move appointment' : 'Confirm', style: text.titleMedium),
             ),
-          const SizedBox(height: 24),
-          booked
-              ? TendButton(label: 'See my visits', icon: Icons.event_note_rounded, onPressed: finish)
-              : TendButton(label: moving ? 'Move it' : 'Book for ${money(widget.doctor.fee)}', icon: Icons.lock_rounded, busy: busy, onPressed: book),
+          ),
         ],
       ),
     );

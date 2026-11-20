@@ -88,7 +88,8 @@ lib/
   config/     palette, theme, motion, timing, brand
   data/       doctors, slots, appointments, money and dates
   state/      the seed, sign in, appointments, free slots (Riverpod, saved)
-  widgets/    the heart and monitor, portraits, calendar, slots, ticket;
+  widgets/    the heart and monitor, portraits, calendar, slots, ticket,
+              the pinned top bar, the particle morph (particles/);
               widgets.dart is one import for all
   screens/    sign in, home, doctor, confirm, visits, me, shell, splash
   demo/       Demo settings button and launch hooks
