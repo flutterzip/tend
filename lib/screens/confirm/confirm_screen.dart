@@ -134,7 +134,7 @@ class _ConfirmScreenState extends ConsumerState<ConfirmScreen> with SingleTicker
             child: TopChrome(
               controller: scroll,
               leading: booked ? null : RoundButton(icon: Icons.arrow_back_rounded, label: 'Back', onTap: () => Navigator.of(context).pop()),
-              trailing: Text(moving ? 'Move appointment' : 'Confirm', style: text.titleMedium),
+              trailing: booked ? null : Text(moving ? 'Move appointment' : 'Confirm', style: text.titleMedium),
             ),
           ),
         ],
